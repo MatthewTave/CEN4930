@@ -14,6 +14,8 @@
 #include "Game.h"
 #include "Behaviors.h"
 
+#include "crtdbg.h"
+
 using namespace std;
 using namespace ufl_cap4053::fundamentals;
 
@@ -91,13 +93,8 @@ namespace ufl_cap4053 { namespace fundamentals {
 	}
 }}
 
-int main()
+int test()
 {
-#ifdef _WIN32
-	SetConsoleOutputCP(CP_UTF8);
-#endif
-
-	// First, run a general test of the behavior tree mechanisms.
 	Behavior* root = buildTree();
 	cout << "\nBreadth-First:\n--------------\n";
 	root->breadthFirstTraverse(printBehavior);
@@ -107,12 +104,51 @@ int main()
 	root->postOrderTraverse(printBehavior);
 	deleteTree(root);
 
-	cout << "Press ENTER to continue..." << endl;
-	while(cin.get() != '\n') {;}
+	return 0;
+}
 
-	// Then, run the wumpus world game simulation.
+void startgame() {
+#ifdef _WIN32
+	SetConsoleOutputCP(CP_UTF8);
+#endif
 	ufl_cap4053::fundamentals::Game::main();
 }
+
+int ret;
+_CrtMemState pre, post, diff;
+int main() {
+	// Create Memory Checkpoints
+	_CrtMemCheckpoint(&pre);
+
+	// Run provided Test Function
+	ret = test();
+	cout << "---------- Results ----------\nTest function returned: " << ret << "\n";
+
+	// Check for Memory Leaks
+	_CrtMemCheckpoint(&post);
+	if (_CrtMemDifference(&diff, &pre, &post))
+	{
+		cout << "Memory Leaks Found! Check Debug Output\n\n";
+		OutputDebugString("---------- Memory Stats ----------\n");
+		_CrtMemDumpStatistics(&diff);
+		OutputDebugString("---------- - New Objects ----------\n");
+		_CrtMemDumpAllObjectsSince(&pre);
+		OutputDebugString("---------- - Memory Leaks ----------\n");
+		_CrtDumpMemoryLeaks();
+	}
+	else {
+		cout << "No Memory Leaks Found!\n\n";
+	}
+
+	cout << "Press ENTER to continue..." << endl;
+	while (cin.get() != '\n') { ; }
+
+	// Then, run the wumpus world game simulation.
+	startgame();
+
+	return 0;
+}
+
 
 Behavior* buildTree()
 {

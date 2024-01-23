@@ -5,6 +5,9 @@
 #include <cassert>
 #include <iostream>
 
+#include "crtdbg.h"
+#include "windows.h"
+
 using namespace std;
 namespace fund = ufl_cap4053::fundamentals;
 
@@ -15,7 +18,38 @@ void traverse(fund::LinkedList<T> const& q, F& dataFunction);
 void printString(string testString);
 void printCString(char const* testString);
 
-int main()
+int test();
+
+int ret;
+_CrtMemState pre, post, diff;
+int main() {
+    // Create Memory Checkpoints
+    _CrtMemCheckpoint(&pre);
+
+    // Run provided Test Function
+    ret = test();
+    cout << "---------- Results ----------\nTest function returned: " << ret << "\n";
+
+    // Check for Memory Leaks
+    _CrtMemCheckpoint(&post);
+    if (_CrtMemDifference(&diff, &pre, &post))
+    {
+        cout << "Memory Leaks Found! Check Debug Output\n";
+        OutputDebugString("---------- Memory Stats ----------\n");
+        _CrtMemDumpStatistics(&diff);
+        OutputDebugString("---------- - New Objects ----------\n");
+        _CrtMemDumpAllObjectsSince(&pre);
+        OutputDebugString("---------- - Memory Leaks ----------\n");
+        _CrtDumpMemoryLeaks();
+    }
+    else {
+        cout << "No Memory Leaks Found!\n";
+    }
+
+    return 0;
+}
+
+int test()
 {
     // Get ready.
     fund::LinkedList<string> valueList;
