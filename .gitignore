@@ -1,7 +1,17 @@
-
+# Ex0
 Assignments/Ex0 - Fundamentals of AI/Source/.vs/*
 Assignments/Ex0 - Fundamentals of AI/Source/x64/*
 Assignments/Ex0 - Fundamentals of AI/Source/LinkedList/x64/*
 Assignments/Ex0 - Fundamentals of AI/Source/WumpusWorld/x64/*
 Assignments/Ex0 - Fundamentals of AI/Source/LinkedList/LinkedList.vcxproj.user
 Assignments/Ex0 - Fundamentals of AI/Source/WumpusWorld/WumpusWorld.vcxproj.user
+
+# P1
+Assignments/P1 - Path Planner/Source/.vs/*
+Assignments/P1 - Path Planner/Source/x64/*
+Assignments/P1 - Path Planner/Source/Framework/PathPlannerApp/x64/*
+Assignments/P1 - Path Planner/Source/Framework/PathPlannerCLI/x64/*
+Assignments/P1 - Path Planner/Source/PathSearch/x64/*
+Assignments/P1 - Path Planner/Source/Framework/TileSystem/x64/*
+Assignments/P1 - Path Planner/Source/Framework/PathPlannerApp/PathPlannerApp.vcxproj.user
+Assignments/P1 - Path Planner/Source/PathSearch/PathSearch.vcxproj.user
