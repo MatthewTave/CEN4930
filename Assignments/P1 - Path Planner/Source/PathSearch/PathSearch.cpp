@@ -1,40 +1,66 @@
 #include "PathSearch.h"
-using namespace std;
+
+#include <chrono>
+
+// Comparison Functions for Priority Queue
+
+bool queue(const pair<int, int>& lhs, const pair<int, int>& rhs) {
+	return true;
+}
 
 namespace ufl_cap4053
 {
 	namespace searches
 	{
-		PathSearch::PathSearch() {
-			return;
+		PathSearch::PathSearch() : q(queue) {
+			map = nullptr;
+
+			curr = { 0, 0 };
+			s = { 0, 0 };
+			t = { 0, 0 };
 		}
 
-		PathSearch::~PathSearch() {
-			return;
-		}
+		PathSearch::~PathSearch() {}
 
 		void PathSearch::load(TileMap* _tileMap) {
-			return;
+			map = _tileMap;
 		}
 
 		void PathSearch::initialize(int startRow, int startCol, int goalRow, int goalCol) {
-			return;
+			s = { startRow, startCol };
+			t = { goalRow, goalCol };
+
+			q = PriorityQueue(queue);
+			
+			cost = vector<vector<int>>(map->getRowCount(), vector<int>(map->getColumnCount(), -1));
+			prev = vector<vector<pair<int, int>>>(map->getRowCount(), vector<pair<int, int>>(map->getColumnCount(), {-1, -1}));
+
+			q.push(s);
+			
+			prev[s.first][s.second] = s;
+			cost[s.first][s.second] = 0;
 		}
 
 		void PathSearch::update(long timeslice) {
-			return;
+			auto start = chrono::high_resolution_clock::now();
+			while (!isDone()) {
+
+				// Search
+
+				if (chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= timeslice) {
+					return;
+				}
+			}
 		}
 
 		void PathSearch::shutdown() {
-			return;
 		}
 
 		void PathSearch::unload() {
-			return;
 		}
 
 		bool PathSearch::isDone() const {
-			return false;
+			return prev[t.first][t.second] != pair<int, int>{-1, -1};
 		}
 
 		vector<Tile const*> const PathSearch::getSolution() const {

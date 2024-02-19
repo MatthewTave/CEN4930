@@ -1,6 +1,11 @@
 #include "../platform.h" // This file will make exporting DLL symbols simpler for students.
+
 #include "../Framework/TileSystem/Tile.h"
 #include "../Framework/TileSystem/TileMap.h"
+#include "../PriorityQueue.h"
+
+#include <vector>
+using namespace std;
 
 namespace ufl_cap4053
 {
@@ -8,6 +13,15 @@ namespace ufl_cap4053
 	{
 		class PathSearch
 		{
+		private:
+			TileMap* map;
+
+			pair<int, int> curr , s, t;
+			
+			vector<vector<int>> cost;
+			vector<vector<pair<int, int>>> prev;
+
+			PriorityQueue<pair<int, int>> q;
 
 		public:
 			DLLEXPORT PathSearch();
