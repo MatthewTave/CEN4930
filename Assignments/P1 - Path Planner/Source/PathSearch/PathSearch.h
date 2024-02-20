@@ -7,6 +7,14 @@
 #include <vector>
 using namespace std;
 
+// Struct to store nodes for the queue
+struct pathNode {
+	pair<int, int> coords, t;
+	int terrainCost, totalCost;
+
+	pathNode(pair<int, int> coords, int terrainCost, int totalCost, pair<int, int> t) : coords(coords), terrainCost(terrainCost), totalCost(totalCost), t(t) {}
+};
+
 namespace ufl_cap4053
 {
 	namespace searches
@@ -21,7 +29,7 @@ namespace ufl_cap4053
 			vector<vector<int>> cost;
 			vector<vector<pair<int, int>>> prev;
 
-			PriorityQueue<pair<int, int>> q;
+			PriorityQueue<pathNode> q;
 
 		public:
 			DLLEXPORT PathSearch();
