@@ -15,3 +15,11 @@ Assignments/P1 - Path Planner/Source/PathSearch/x64/*
 Assignments/P1 - Path Planner/Source/Framework/TileSystem/x64/*
 Assignments/P1 - Path Planner/Source/Framework/PathPlannerApp/PathPlannerApp.vcxproj.user
 Assignments/P1 - Path Planner/Source/PathSearch/PathSearch.vcxproj.user
+
+# Ex2
+Assignments/Ex2 - Reversi/Source/.vs/*
+Assignments/Ex2 - Reversi/Source/CoreAI/*
+Assignments/Ex2 - Reversi/Source/Reversi/*
+Assignments/Ex2 - Reversi/Source/StudentAI/bin/*
+Assignments/Ex2 - Reversi/Source/StudentAI/obj/*
+
