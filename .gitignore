@@ -16,6 +16,14 @@ Assignments/P1 - Path Planner/Source/Framework/TileSystem/x64/*
 Assignments/P1 - Path Planner/Source/Framework/PathPlannerApp/PathPlannerApp.vcxproj.user
 Assignments/P1 - Path Planner/Source/PathSearch/PathSearch.vcxproj.user
 
+# Ex1
+Assignments/Ex1 - Flocking/Source/.vs/*
+Assignments/Ex1 - Flocking/Source/Core/*
+Assignments/Ex1 - Flocking/Source/Flocking/bin/*
+Assignments/Ex1 - Flocking/Source/Flocking/obj/*
+Assignments/Ex1 - Flocking/Source/StudentAI/bin/*
+Assignments/Ex1 - Flocking/Source/StudentAI/obj/*
+
 # Ex2
 Assignments/Ex2 - Reversi/Source/.vs/*
 Assignments/Ex2 - Reversi/Source/CoreAI/*
