@@ -8,14 +8,22 @@ namespace CAP4053.Student
     {
         // Configuration Constants
         public const int TARGET_DECAY_TIME = 5;
+        public const int WALL_AVOIDANCE_DELAY = 10;
 
         public const double BULLET_POWER_INCREMENT = 0.1;
 
-        public const double MIN_ENGAGE_SCALING_DISTANCE = 100.0;
-        public const double MAX_ENGAGE_SCALING_DISTANCE = 1000.0;
+        public const double MIN_ENGAGE_SCALING_DISTANCE = 200.0;
+        public const double MAX_ENGAGE_SCALING_DISTANCE = 1200.0;
 
-        public const double MIN_BULLET_POWER = 0.1;
-        public const double MAX_BULLET_POWER = 3.0;
+        public const double MIN_ANGLE_OF_ATTACK = 45.0;
+        public const double MAX_ANGLE_OF_ATTACK = 90.0;
+
+        public const double MIN_WALL_SCALING_DISTANCE = 100.0;
+        public const double MAX_WALL_SCALING_DISTANCE = 200.0;
+
+
+        public double MovementDirection;
+        public double LastWallAvoidance;
 
         private class botInfo
         {
@@ -25,7 +33,11 @@ namespace CAP4053.Student
             public double heading;
             public double distance;
             public double velocity;
+            public double energy;
             public long infoTime;
+            public bool energyDropFlag;
+
+
             public botInfo()
             {
                 aquired = false;
@@ -33,6 +45,8 @@ namespace CAP4053.Student
                 heading = 0;
                 distance = 0;
                 velocity = 0;
+                energy = 0;
+                energyDropFlag = false;
                 infoTime = 0;
             }
         }
@@ -41,6 +55,8 @@ namespace CAP4053.Student
 
         public Megatron() {
             targetInfo = new botInfo();
+            MovementDirection = 1;
+            LastWallAvoidance = 0;
         }
 
         public void BeatRobot()
@@ -76,6 +92,8 @@ namespace CAP4053.Student
             targetInfo.distance = evnt.Distance;
             targetInfo.velocity = evnt.Velocity;
             targetInfo.infoTime = evnt.Time;
+            targetInfo.energyDropFlag = evnt.Energy < targetInfo.energy;
+            targetInfo.energy = evnt.Energy;
 
             targetInfo.absoluteBearing = normalizeAngle(this.Heading + targetInfo.bearing);
         }
@@ -113,26 +131,25 @@ namespace CAP4053.Student
         //---------- Gunnery Management Functions ----------//
         private void ManageGun()
         {
-            if(targetInfo.aquired)
+            // If we don't have a target, point the gun at the center of the screen
+            // This makes it more likely that we will already be pointing roughly at an enemy
+            if (!targetInfo.aquired)
             {
-                // If we have a target, see if there is a valid firing solution with the current gun angle
-                double bulletPower = firingSolutionBulletPower();
-
-                // If there is a valid firing solution, shoot a bullet with the valid bullet power
-                if (bulletPower != 0)
-                {
-                    SetFire(bulletPower);
-                }
-
-                // Turn the gun to try to get a firing solution with the max bullet power
-                SetGunTurnTo(targetGunAngle(maxAcceptableBulletPower(targetInfo.distance)));
-
-            } else
-            {
-                // Otherwise, point the gun towards the center of the screen
-                // This results in the highest chance of having the gun already pointed at the target when we find it
                 SetGunTurnTo(CenterBearing());
+                return;
             }
+            
+            // If we have a target, see if there is a valid firing solution with the current gun angle
+            double bulletPower = firingSolutionBulletPower();
+
+            // If there is a valid firing solution, shoot a bullet with the valid bullet power
+            if (bulletPower != 0)
+            {
+                SetFire(bulletPower);
+            }
+
+            // Turn the gun to try to get a firing solution with the max bullet power
+            SetGunTurnTo(targetGunAngle(maxAcceptableBulletPower(targetInfo.distance)));
         }
 
         // Utility function to find the angle the gun needs to turn to to shoot a moving target
@@ -141,10 +158,10 @@ namespace CAP4053.Student
             return asin(targetInfo.velocity * sin(normalizeAngle(targetInfo.heading - targetInfo.absoluteBearing)) / Rules.GetBulletSpeed(bulletPower)) + targetInfo.absoluteBearing;
         }
 
-        // Finds the acceptable error for firing the gun based on the distance to the target's expected location
-        private double acceptableGunneryError(double bulletPower)  // TODO: FINISH THIS FUNCTION
+        // Finds the acceptable error for firing the gun based on the distance to the target
+        private double acceptableGunneryError() 
         {
-            return 1.0;
+            return atan(this.Width * 0.5 / targetInfo.distance);
         }
 
         // Finds the highest bullet power that will hit the target with the current gun angle, if at all possible
@@ -153,9 +170,8 @@ namespace CAP4053.Student
         {
             for(double bp = maxAcceptableBulletPower(targetInfo.distance); bp >= 0.1; bp -= BULLET_POWER_INCREMENT)
             {
-                if(normalizeAngle(this.GunHeading - targetGunAngle(bp)) <= acceptableGunneryError(bp))
+                if(normalizeAngle(this.GunHeading - targetGunAngle(bp)) <= acceptableGunneryError())
                 {
-                    Console.WriteLine("Firing Solution Found, bp: " + bp + " angle: " + targetGunAngle(bp));
                     return bp;
                 }
             }
@@ -164,40 +180,90 @@ namespace CAP4053.Student
         }
 
         // Scales bullet power to be higher for closer enemies, and lower for further enemies
-        // TODO: Experiment with this scaling
         private double maxAcceptableBulletPower(double distance)
         {
             if(targetInfo.distance > MAX_ENGAGE_SCALING_DISTANCE)
             {
-                return MIN_BULLET_POWER;
+                return Rules.MIN_BULLET_POWER;
             } else if(targetInfo.distance < MIN_ENGAGE_SCALING_DISTANCE)
             {
-                return MAX_BULLET_POWER;
+                return Rules.MAX_BULLET_POWER;
             } else
             {
                 double powerMultiplier = (MAX_ENGAGE_SCALING_DISTANCE - targetInfo.distance) / (MAX_ENGAGE_SCALING_DISTANCE - MIN_ENGAGE_SCALING_DISTANCE);
-                return powerMultiplier * (MAX_BULLET_POWER - MIN_BULLET_POWER) + MIN_BULLET_POWER;
+                return (powerMultiplier * (Rules.MAX_BULLET_POWER - Rules.MIN_BULLET_POWER)) + Rules.MIN_BULLET_POWER;
             }
         }
 
         //---------- Movement Management Functions ----------//
         private void ManageMovement()
         {
-            SetBodyTurnTo(Double.MaxValue);
-            SetAhead(Double.MaxValue);
-            //if (targetInfo.aquired)
-            //{
-            //    SetBodyTurnTo(targetInfo.absoluteBearing);
-            //    SetAhead(Double.MaxValue);
-            //}
+            // Calculate Desired Angle of Attack based on wall distance
+            double angleOfAttack = AngleOfAttack();
+
+            // If we don't have a target, just circle the center of the board
+            if (!targetInfo.aquired)
+            {
+                SetBodyTurnTo(normalizeAngle(CenterBearing() + angleOfAttack));
+                SetAhead(Double.MaxValue * MovementDirection);
+                return;
+            }
+
+            // Check if we need to switch direction due to enemy fire or we are too close to a wall
+            if(targetInfo.energyDropFlag)
+            {
+                Console.WriteLine("Going to Hit Wall! Heading: " + this.Heading + " V: " + this.Velocity);
+                MovementDirection *= -1;
+                targetInfo.energyDropFlag = false;
+            } else if (IsGoingToHitWall() && this.Time - this.LastWallAvoidance > WALL_AVOIDANCE_DELAY)
+            {
+                this.LastWallAvoidance = this.Time;
+                MovementDirection *= -1;
+            }
+
+            SetBodyTurnTo(normalizeAngle(targetInfo.absoluteBearing + angleOfAttack));
+            SetAhead(Double.MaxValue * MovementDirection);
+
+        }
+
+        // When we are close to the wall, we want to move more towards the target
+        // When we are far from the wall, we want to move in wider sweeps to evade better
+        private double AngleOfAttack()
+        {
+            double closestWallDistance = ClosestWallDistance();
+            if (closestWallDistance > MAX_WALL_SCALING_DISTANCE)
+            {
+                return MAX_ANGLE_OF_ATTACK;
+            }
+            else if (closestWallDistance < MIN_WALL_SCALING_DISTANCE)
+            {
+                return MIN_ANGLE_OF_ATTACK;
+            }
+            else
+            {
+                double aoaMultiplier = (MAX_WALL_SCALING_DISTANCE - closestWallDistance) / (MAX_WALL_SCALING_DISTANCE - MIN_WALL_SCALING_DISTANCE);
+                return (aoaMultiplier * (MAX_ANGLE_OF_ATTACK - MIN_ANGLE_OF_ATTACK)) + MIN_ANGLE_OF_ATTACK;
+            }
+        }
+
+        private bool IsGoingToHitWall()
+        {
+            return (this.Y < MIN_WALL_SCALING_DISTANCE && ((this.Velocity >= 0 && (this.Heading > 90 && this.Heading < 270)) || (this.Velocity <= 0 && (this.Heading < 90 && this.Heading > 270)))) ||
+                   (this.BattleFieldHeight - this.Y < MIN_WALL_SCALING_DISTANCE && ((this.Velocity <= 0 && (this.Heading > 90 && this.Heading < 270)) || (this.Velocity >= 0 && (this.Heading < 90 && this.Heading > 270)))) ||
+                   (this.X < MIN_WALL_SCALING_DISTANCE && ((this.Velocity >= 0 && (this.Heading > 180)) || (this.Velocity <= 0 && (this.Heading < 180)))) ||
+                   (this.BattleFieldWidth - this.X < MIN_WALL_SCALING_DISTANCE && ((this.Velocity >= 0 && (this.Heading < 180)) || (this.Velocity <= 0 && (this.Heading > 180))));
         }
 
         //---------- Utility Functions ----------//
 
-        // Get the bearing to the center of the screen
-        private double CenterBearing() // TODO: FINISH THIS FUNCTION
+        private double CenterBearing()
         {
-            return 0;
+            return atan2(this.BattleFieldWidth / 2 - this.X, this.BattleFieldHeight / 2 - this.Y);
+        }
+
+        private double ClosestWallDistance()
+        {
+            return Math.Min(Math.Min(this.X, this.BattleFieldWidth - this.X - 1), Math.Min(this.Y, this.BattleFieldHeight - this.Y - 1));
         }
 
         // Utility functions to turn to a certain angle as fast as possible
@@ -266,16 +332,39 @@ namespace CAP4053.Student
             return radians * 180 / Math.PI;
         }
 
-        // Calculates sin in degrees
         public static double sin(double degrees)
         {
             return ToDegrees(Math.Sin(ToRadians(degrees)));
         }
 
-        // Calculate asin in degrees
+        public static double cos(double degrees)
+        {
+            return ToDegrees(Math.Cos(ToRadians(degrees)));
+        }
+
+        public static double tan(double degrees)
+        {
+            return ToDegrees(Math.Tan(ToRadians(degrees)));
+        }
+
         public static double asin(double degrees)
         {
             return ToDegrees(Math.Asin(ToRadians(degrees)));
+        }
+
+        public static double acos(double degrees)
+        {
+            return ToDegrees(Math.Acos(ToRadians(degrees)));
+        }
+
+        public static double atan(double ratio)
+        {
+            return ToDegrees(Math.Atan(ratio));
+        }
+
+        public static double atan2(double y, double x)
+        {
+            return ToDegrees(Math.Atan2(y, x));
         }
     }
 }
