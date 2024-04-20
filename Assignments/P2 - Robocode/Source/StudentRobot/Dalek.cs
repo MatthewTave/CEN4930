@@ -57,6 +57,11 @@ namespace CAP4053.Student
             IsAdjustGunForRobotTurn = true;
             MaxVelocity = 8;
 
+            this.BodyColor = System.Drawing.ColorTranslator.FromHtml("#602537");
+            this.GunColor = System.Drawing.ColorTranslator.FromHtml("#0F0F0F");
+            this.RadarColor = System.Drawing.ColorTranslator.FromHtml("#464F51");
+            this.BulletColor = System.Drawing.ColorTranslator.FromHtml("#1B2C3C");
+
             while (true)
             {
 
