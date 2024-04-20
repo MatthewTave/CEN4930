@@ -21,6 +21,7 @@ namespace CAP4053.Student
         public const double MIN_WALL_SCALING_DISTANCE = 100.0;
         public const double MAX_WALL_SCALING_DISTANCE = 200.0;
 
+        public const double TARGET_ENGANGEMENT_DISTANCE = 400.0;
 
         public double MovementDirection;
         public double LastWallAvoidance;
@@ -86,6 +87,11 @@ namespace CAP4053.Student
 
         public override void OnScannedRobot(ScannedRobotEvent evnt)
         {
+            if (IsTeammate(evnt.Name))
+            {
+                return;
+            }
+
             targetInfo.aquired = true;
             targetInfo.bearing = evnt.Bearing;
             targetInfo.heading = evnt.Heading;
@@ -212,18 +218,18 @@ namespace CAP4053.Student
             // Check if we need to switch direction due to enemy fire or we are too close to a wall
             if(targetInfo.energyDropFlag)
             {
-                Console.WriteLine("Going to Hit Wall! Heading: " + this.Heading + " V: " + this.Velocity);
                 MovementDirection *= -1;
                 targetInfo.energyDropFlag = false;
-            } else if (IsGoingToHitWall() && this.Time - this.LastWallAvoidance > WALL_AVOIDANCE_DELAY)
+            } else if (IsGoingToHitWall())
             {
+                Console.WriteLine("Going to Hit Wall, Switching Direction");
                 this.LastWallAvoidance = this.Time;
                 MovementDirection *= -1;
             }
 
+            // Otherwise, try to circle around them and dodge their bullets and walls
             SetBodyTurnTo(normalizeAngle(targetInfo.absoluteBearing + angleOfAttack));
             SetAhead(Double.MaxValue * MovementDirection);
-
         }
 
         // When we are close to the wall, we want to move more towards the target
@@ -248,8 +254,9 @@ namespace CAP4053.Student
 
         private bool IsGoingToHitWall()
         {
-            return (this.Y < MIN_WALL_SCALING_DISTANCE && ((this.Velocity >= 0 && (this.Heading > 90 && this.Heading < 270)) || (this.Velocity <= 0 && (this.Heading < 90 && this.Heading > 270)))) ||
-                   (this.BattleFieldHeight - this.Y < MIN_WALL_SCALING_DISTANCE && ((this.Velocity <= 0 && (this.Heading > 90 && this.Heading < 270)) || (this.Velocity >= 0 && (this.Heading < 90 && this.Heading > 270)))) ||
+            Console.WriteLine("Heading: " + this.Heading + " Vel: " + this.Velocity);
+            return (this.Y < MIN_WALL_SCALING_DISTANCE && ((this.Velocity >= 0 && (this.Heading > 90 && this.Heading < 270)) || (this.Velocity <= 0 && (this.Heading < 90 || this.Heading > 270)))) ||
+                   (this.BattleFieldHeight - this.Y < MIN_WALL_SCALING_DISTANCE && ((this.Velocity <= 0 && (this.Heading > 90 && this.Heading < 270)) || (this.Velocity >= 0 && (this.Heading < 90 || this.Heading > 270)))) ||
                    (this.X < MIN_WALL_SCALING_DISTANCE && ((this.Velocity >= 0 && (this.Heading > 180)) || (this.Velocity <= 0 && (this.Heading < 180)))) ||
                    (this.BattleFieldWidth - this.X < MIN_WALL_SCALING_DISTANCE && ((this.Velocity >= 0 && (this.Heading < 180)) || (this.Velocity <= 0 && (this.Heading > 180))));
         }
